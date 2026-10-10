@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Accès Refusé{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-ban"></i> 
+                    Accès Refusé
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-shield-alt fa-4x text-danger mb-3"></i>
+                    <h5>Interface d'Administration Réservée</h5>
+                    <p class="text-muted">
+                        L'interface d'administration est exclusivement réservée au personnel autorisé du restaurant.
+                    </p>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-info-circle"></i> Vous êtes connecté en tant que client</h6>
+                    <p class="mb-0">
+                        En tant que client, vous avez accès à votre espace personnel pour gérer vos réservations 
+                        et consulter le menu, mais pas à l'interface d'administration.
+                    </p>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i class="fas fa-user text-primary"></i> Espace Client</h6>
+                                <ul class="list-unstyled small text-start">
+                                    <li>✓ Réserver une table</li>
+                                    <li>✓ Gérer vos réservations</li>
+                                    <li>✓ Consulter le menu</li>
+                                    <li>✓ Modifier votre profil</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i class="fas fa-cogs text-warning"></i> Administration</h6>
+                                <ul class="list-unstyled small text-start">
+                                    <li>⚠️ Gestion des plats</li>
+
+                                    <li>⚠️ Statistiques</li>
+                                    <li>⚠️ Configuration système</li>
+                                </ul>
+                                <small class="text-muted">Réservé au staff</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    {% if request.session.client_id %}
+                        <a href="{% url 'restaurant:profil_client' %}" class="btn btn-primary">
+                            <i class="fas fa-user"></i> Accéder à mon profil client
+                        </a>
+                        <a href="{% url 'restaurant:reserver_table' %}" class="btn btn-outline-success">
+                            <i class="fas fa-calendar-plus"></i> Faire une réservation
+                        </a>
+                    {% else %}
+                        <a href="{% url 'restaurant:connexion_client' %}" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Se connecter
+                        </a>
+                        <a href="{% url 'restaurant:inscription_client' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus"></i> S'inscrire
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'restaurant:menu' %}" class="btn btn-outline-info">
+                        <i class="fas fa-book-open"></i> Consulter le menu
+                    </a>
+                    <a href="{% url 'restaurant:index' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home"></i> Retour à l'accueil
+                    </a>
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <h6 class="text-muted">Vous êtes membre du personnel ?</h6>
+                    <p class="small text-muted">
+                        Si vous êtes employé du restaurant et devez accéder à l'administration, 
+                        contactez votre responsable pour obtenir un compte staff.
+                    </p>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <i class="fas fa-phone"></i> <strong>Contact</strong><br>
+                                +212 5XX-XXXXXX
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <i class="fas fa-envelope"></i> <strong>Email</strong><br>
+                                contact@restaurant.ma
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Animation d'entrée
+document.addEventListener('DOMContentLoaded', function() {
+    const card = document.querySelector('.card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(function() {
+        card.style.transition = 'all 0.5s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+    }, 100);
+});
+</script>
+{% endblock %}

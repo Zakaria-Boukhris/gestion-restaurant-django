@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion des Plats{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-utensils text-primary"></i> 
+        Gestion des Plats
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'restaurant:admin_custom' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour Admin
+            </a>
+            <a href="{% url 'restaurant:ajouter_plat' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Ajouter un Plat
+            </a>
+            <a href="{% url 'restaurant:menu' %}" class="btn btn-outline-primary">
+                <i class="fas fa-eye"></i> Voir Menu Public
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques des plats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-utensils fa-2x mb-2"></i>
+                <h4>{{ plats.count }}</h4>
+                <p class="small">Total Plats</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-soup fa-2x mb-2"></i>
+                <h4>{{ plats|length }}</h4>
+                <p class="small">Plats Disponibles</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-tags fa-2x mb-2"></i>
+                <h4>4</h4>
+                <p class="small">Catégories</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <i class="fas fa-coins fa-2x mb-2"></i>
+                <h4>{{ plats|length|floatformat:0 }}</h4>
+                <p class="small">Prix Moyen</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des plats par catégorie -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i> Liste des Plats par Catégorie
+                </h5>
+            </div>
+            <div class="card-body">
+                {% regroup plats by categorie as plats_par_categorie %}
+                
+                {% for categorie in plats_par_categorie %}
+                <div class="mb-4">
+                    <h4 class="text-primary border-bottom pb-2">
+                        <i class="fas fa-tag"></i> {{ categorie.grouper|title }}
+                    </h4>
+                    
+                    <div class="row">
+                        {% for plat in categorie.list %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                {% if plat.image %}
+                                <img src="{{ plat.image.url }}" class="card-img-top" alt="{{ plat.nom }}" style="height: 200px; object-fit: cover;">
+                                {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ plat.nom }}</h6>
+                                    <p class="card-text small text-muted">{{ plat.description|truncatewords:15 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="h5 text-success mb-0">{{ plat.prix }} DH</span>
+                                        <span class="badge bg-secondary">{{ plat.categorie|title }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer bg-transparent">
+                                    <div class="d-grid gap-1">
+                                        <a href="{% url 'restaurant:modifier_plat' plat.id %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-edit"></i> Modifier
+                                        </a>
+                                        <a href="{% url 'restaurant:supprimer_plat' plat.id %}" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash"></i> Supprimer
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus"></i> Actions Rapides
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-success w-100" onclick="ajouterPlat()">
+                            <i class="fas fa-plus-circle"></i> Ajouter Plat
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'restaurant:menu' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-eye"></i> Aperçu Menu
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-warning w-100" onclick="exporterMenu()">
+                            <i class="fas fa-download"></i> Exporter Menu
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-info w-100" onclick="statistiquesPlats()">
+                            <i class="fas fa-chart-bar"></i> Statistiques
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informations utiles -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle"></i> Gestion des Plats</h6>
+            <ul class="mb-0">
+                <li><strong>Ajouter :</strong> Créez de nouveaux plats avec nom, description, prix et image</li>
+                <li><strong>Modifier :</strong> Mettez à jour les informations des plats existants</li>
+                <li><strong>Supprimer :</strong> Retirez les plats qui ne sont plus disponibles</li>
+                <li><strong>Catégories :</strong> Organisez vos plats par type (entrées, plats, desserts, boissons)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function ajouterPlat() {
+    window.location.href = "{% url 'restaurant:ajouter_plat' %}";
+}
+
+function modifierPlat(platId) {
+    window.location.href = `/admin/plats/modifier/${platId}/`;
+}
+
+function supprimerPlat(platId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce plat ?')) {
+        window.location.href = `/admin/plats/supprimer/${platId}/`;
+    }
+}
+
+function exporterMenu() {
+    // Créer un export PDF du menu
+    window.print();
+}
+
+function statistiquesPlats() {
+    window.location.href = "{% url 'restaurant:statistiques_simple' %}";
+}
+
+// Animation des cartes au survol
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.2s';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

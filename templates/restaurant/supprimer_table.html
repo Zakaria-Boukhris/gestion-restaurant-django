@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supprimer la Table {{ table.numero }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-trash-alt text-danger"></i> Supprimer la Table
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'restaurant:gerer_tables_simple' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la gestion des tables
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        
+        <div class="alert alert-danger">
+            <h5><i class="fas fa-exclamation-triangle"></i> Attention !</h5>
+            <p class="mb-0">Vous êtes sur le point de supprimer définitivement cette table. Cette action est irréversible.</p>
+        </div>
+        
+       
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chair"></i> Table à Supprimer
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <h6><i class="fas fa-hashtag text-primary"></i> Numéro :</h6>
+                        <p class="fs-3 fw-bold">{{ table.numero }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h6><i class="fas fa-users text-info"></i> Capacité :</h6>
+                        <p class="fs-5">{{ table.capacite }} personne{{ table.capacite|pluralize }}</p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6><i class="fas fa-info-circle text-warning"></i> État Actuel :</h6>
+                <p>
+                    <span class="badge 
+                        {% if table.etat == 'libre' %}bg-success
+                        {% elif table.etat == 'occupee' %}bg-danger
+                        {% else %}bg-warning text-dark{% endif %} fs-6">
+                        {{ table.get_etat_display }}
+                    </span>
+                </p>
+            </div>
+        </div>
+        
+        
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Conséquences de la Suppression
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>La table sera définitivement supprimée du restaurant</li>
+                    <li>Elle ne sera plus disponible pour les réservations</li>
+                    <li>Les réservations futures pour cette table seront annulées</li>
+                    <li>L'historique des commandes passées sera conservé</li>
+                    <li>Cette action ne peut pas être annulée</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="alert alert-warning">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="confirmation" 
+                                   required>
+                            <label class="form-check-label" for="confirmation">
+                                <strong>Je confirme vouloir supprimer définitivement la table {{ table.numero }}</strong>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'restaurant:gerer_tables_simple' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-danger" id="btnSupprimer" disabled>
+                            <i class="fas fa-trash-alt"></i> Supprimer Définitivement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmationCheckbox = document.getElementById('confirmation');
+    const btnSupprimer = document.getElementById('btnSupprimer');
+    const form = document.querySelector('form');
+   
+    confirmationCheckbox.addEventListener('change', function() {
+        btnSupprimer.disabled = !this.checked;
+    });
+    
+    form.addEventListener('submit', function(e) {
+        if (!confirm('Êtes-vous absolument sûr de vouloir supprimer cette table ? Cette action est irréversible.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

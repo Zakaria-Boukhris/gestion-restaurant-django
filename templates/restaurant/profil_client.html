@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- Profil du client -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user"></i> Mon Profil</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-user-circle fa-4x text-primary"></i>
+                    <h4 class="mt-2">{{ client.nom }}</h4>
+                    <p class="text-muted">Client depuis le {{ client.date_creation|date:"d/m/Y" }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong><i class="fas fa-phone"></i> Téléphone :</strong><br>
+                    {{ client.telephone }}
+                </div>
+                
+                {% if client.email %}
+                <div class="mb-3">
+                    <strong><i class="fas fa-envelope"></i> Email :</strong><br>
+                    {{ client.email }}
+                </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'restaurant:modifier_profil_client' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Modifier mon profil
+                    </a>
+                    <a href="{% url 'restaurant:reserver_table' %}" class="btn btn-success">
+                        <i class="fas fa-calendar-plus"></i> Nouvelle réservation
+                    </a>
+                    <a href="{% url 'restaurant:deconnexion_client' %}" class="btn btn-outline-danger">
+                        <i class="fas fa-sign-out-alt"></i> Se déconnecter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Réservations -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar"></i> Mes Réservations</h5>
+            </div>
+            <div class="card-body">
+                {% if reservations %}
+                    {% for reservation in reservations %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-chair"></i> Table {{ reservation.table.numero }}
+                                        <span class="badge
+                                            {% if reservation.confirmee %}bg-success
+                                            {% else %}bg-warning text-dark{% endif %}">
+                                            {% if reservation.confirmee %}
+                                                <i class="fas fa-check-circle"></i> Confirmée
+                                            {% else %}
+                                                <i class="fas fa-clock"></i> En attente de confirmation
+                                            {% endif %}
+                                        </span>
+                                    </h6>
+                                    <p class="mb-1">
+                                        <i class="fas fa-calendar-day"></i> {{ reservation.date|date:"l d F Y" }}<br>
+                                        <i class="fas fa-clock"></i> {{ reservation.get_creneau_display }} <small class="text-info">(1h30)</small><br>
+                                        <i class="fas fa-users"></i> {{ reservation.nombre_personnes }} personne{{ reservation.nombre_personnes|pluralize }}
+                                    </p>
+                                    {% if reservation.commentaire %}
+                                        <p class="text-muted small mb-1">
+                                            <i class="fas fa-comment"></i> {{ reservation.commentaire }}
+                                        </p>
+                                    {% endif %}
+                                    {% if not reservation.confirmee %}
+                                        <div class="alert alert-info alert-sm p-2 mb-1">
+                                            <small>
+                                                <i class="fas fa-info-circle"></i>
+                                                Votre demande de réservation sera confirmée par notre équipe sous peu.
+                                            </small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <small class="text-muted">
+                                        Créée le {{ reservation.date_creation|date:"d/m/Y à H:i" }}
+                                    </small>
+                                    <div class="mt-2">
+                                        {% if reservation.peut_etre_annulee_par_client %}
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    onclick="annulerReservation({{ reservation.id }})">
+                                                <i class="fas fa-times"></i> Annuler
+                                            </button>
+                                        {% else %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                {% if reservation.confirmee %}
+                                                    Annulation possible jusqu'à 2h avant
+                                                {% else %}
+                                                    Réservation trop proche
+                                                {% endif %}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <h5>Aucune réservation</h5>
+                        <p class="text-muted">Vous n'avez pas encore de réservation.</p>
+                        <a href="{% url 'restaurant:reserver_table' %}" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus"></i> Faire une réservation
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Commandes -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-utensils"></i> Mes Commandes</h5>
+            </div>
+            <div class="card-body">
+                {% if commandes %}
+                    {% for commande in commandes %}
+                    <div class="card mb-3" id="commande-{{ commande.id }}">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-receipt"></i> Commande #{{ commande.id }}
+                                        <span class="badge
+                                            {% if commande.statut == 'en_preparation' %}bg-warning text-dark
+                                            {% elif commande.statut == 'servie' %}bg-info
+                                            {% elif commande.statut == 'terminee' %}bg-success
+                                            {% elif commande.statut == 'annulee' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ commande.get_statut_display }}
+                                        </span>
+                                    </h6>
+                                    <p class="mb-1">
+                                        <i class="fas fa-chair"></i> Table {{ commande.table.numero }}<br>
+                                        <i class="fas fa-clock"></i> {{ commande.date|date:"l d F Y à H:i" }}<br>
+                                        <i class="fas fa-coins"></i> Total: {{ commande.total|floatformat:2 }} DH
+                                    </p>
+
+                                    <!-- Détails des plats -->
+                                    <div class="mt-2">
+                                        <small class="text-muted">Plats commandés:</small>
+                                        <ul class="list-unstyled small mt-1">
+                                            {% for ligne in commande.lignecommande_set.all %}
+                                                <li>• {{ ligne.quantite }}x {{ ligne.plat.nom }} - {{ ligne.sous_total|floatformat:2 }} DH</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <small class="text-muted">
+                                        Créée le {{ commande.date|date:"d/m/Y à H:i" }}
+                                    </small>
+                                    <div class="mt-2">
+                                        {% if commande.statut == 'en_preparation' %}
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    onclick="annulerCommande({{ commande.id }})">
+                                                <i class="fas fa-times"></i> Annuler
+                                            </button>
+                                        {% else %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                {% if commande.statut == 'servie' %}
+                                                    Commande servie
+                                                {% elif commande.statut == 'terminee' %}
+                                                    Commande terminée
+                                                {% elif commande.statut == 'annulee' %}
+                                                    Commande annulée
+                                                {% else %}
+                                                    Annulation non possible
+                                                {% endif %}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                        <h5>Aucune commande</h5>
+                        <p class="text-muted">Vous n'avez pas encore passé de commande.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function annulerReservation(reservationId) {
+    console.log('=== ANNULATION RÉSERVATION CLIENT ===');
+    console.log('ID réservation:', reservationId);
+
+    if (confirm('Êtes-vous sûr de vouloir annuler cette réservation ? Cette action est irréversible.')) {
+        console.log('Annulation acceptée par le client');
+
+        // Utiliser la méthode POST classique pour les clients (pas AJAX)
+        // car ils n'ont pas besoin de synchronisation temps réel
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/reservations/annuler/${reservationId}/`;
+
+        // Ajouter le token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken.value;
+            form.appendChild(csrfInput);
+
+            console.log('Token CSRF ajouté:', csrfToken.value);
+        } else {
+            console.error('❌ Token CSRF non trouvé!');
+            alert('ERREUR: Token CSRF non trouvé!');
+            return;
+        }
+
+        // Ajouter le formulaire au DOM et le soumettre
+        document.body.appendChild(form);
+        console.log('Soumission du formulaire...');
+        form.submit();
+
+    } else {
+        console.log('Annulation refusée par le client');
+    }
+}
+
+function annulerCommande(commandeId) {
+    console.log('=== ANNULATION COMMANDE CLIENT ===');
+    console.log('ID commande:', commandeId);
+
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible.')) {
+        console.log('Annulation acceptée par le client');
+
+        // Utiliser AJAX pour annuler la commande
+        fetch(`/commandes/annuler/${commandeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Supprimer la commande de l'interface avec animation
+                const commandeElement = document.querySelector(`#commande-${commandeId}`);
+                if (commandeElement) {
+                    commandeElement.style.transition = 'opacity 0.3s ease';
+                    commandeElement.style.opacity = '0';
+
+                    setTimeout(() => {
+                        commandeElement.remove();
+
+                        // Vérifier s'il reste des commandes
+                        const commandesRestantes = document.querySelectorAll('[id^="commande-"]');
+                        if (commandesRestantes.length === 0) {
+                            // Afficher le message "Aucune commande"
+                            const container = document.querySelector('.card-body');
+                            if (container) {
+                                const messageHTML = `
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                                        <h5>Aucune commande</h5>
+                                        <p class="text-muted">Vous n'avez pas encore passé de commande.</p>
+                                    </div>
+                                `;
+                                container.innerHTML = messageHTML;
+                            }
+                        }
+                    }, 300);
+                }
+
+                // Afficher une notification de succès
+                alert('Commande annulée avec succès !');
+
+            } else {
+                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de l\'annulation de la commande');
+        });
+
+    } else {
+        console.log('Annulation refusée par le client');
+    }
+}
+
+function annulerCommande(commandeId) {
+    console.log('=== ANNULATION COMMANDE CLIENT ===');
+    console.log('ID commande:', commandeId);
+
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible.')) {
+        console.log('Annulation acceptée par le client');
+
+        // Utiliser AJAX pour annuler la commande
+        fetch(`/commandes/annuler/${commandeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Supprimer la commande de l'interface avec animation
+                const commandeElement = document.querySelector(`#commande-${commandeId}`);
+                if (commandeElement) {
+                    commandeElement.style.transition = 'opacity 0.3s ease';
+                    commandeElement.style.opacity = '0';
+
+                    setTimeout(() => {
+                        commandeElement.remove();
+
+                        // Vérifier s'il reste des commandes
+                        const commandesRestantes = document.querySelectorAll('[id^="commande-"]');
+                        if (commandesRestantes.length === 0) {
+                            // Afficher le message "Aucune commande"
+                            const container = document.querySelector('.card-body');
+                            if (container) {
+                                const messageHTML = `
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                                        <h5>Aucune commande</h5>
+                                        <p class="text-muted">Vous n'avez pas encore passé de commande.</p>
+                                    </div>
+                                `;
+                                container.innerHTML = messageHTML;
+                            }
+                        }
+                    }, 300);
+                }
+
+                // Afficher une notification de succès
+                alert('Commande annulée avec succès !');
+
+            } else {
+                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de l\'annulation de la commande');
+        });
+
+    } else {
+        console.log('Annulation refusée par le client');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion des Tables{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-chair text-success"></i> 
+        Gestion des Tables
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'restaurant:admin_custom' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour Admin
+            </a>
+            <a href="{% url 'restaurant:ajouter_table' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Ajouter une Table
+            </a>
+            <a href="{% url 'restaurant:dashboard_serveur' %}" class="btn btn-outline-success">
+                <i class="fas fa-eye"></i> Dashboard Serveur
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques des tables -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-chair fa-2x mb-2"></i>
+                <h4>{{ tables.count }}</h4>
+                <p class="small">Total Tables</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h4>{% for table in tables %}{{ table.capacite }}{% if not forloop.last %}+{% endif %}{% endfor %}</h4>
+                <p class="small">Capacité Totale</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h4>{{ tables|length }}</h4>
+                <p class="small">Tables Configurées</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <i class="fas fa-cog fa-2x mb-2"></i>
+                <h4>Active</h4>
+                <p class="small">Configuration</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plan des tables -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-th-large"></i> Plan des Tables
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for table in tables %}
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card h-100 border-success">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-chair fa-3x 
+                                        {% if table.etat == 'libre' %}text-success
+                                        {% elif table.etat == 'occupee' %}text-danger
+                                        {% else %}text-warning{% endif %}"></i>
+                                </div>
+                                
+                                <h5 class="card-title">Table {{ table.numero }}</h5>
+                                
+                                <div class="mb-2">
+                                    <span class="badge bg-primary">{{ table.capacite }} places</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <span class="badge 
+                                        {% if table.etat == 'libre' %}bg-success
+                                        {% elif table.etat == 'occupee' %}bg-danger
+                                        {% else %}bg-warning text-dark{% endif %}">
+                                        {{ table.get_etat_display }}
+                                    </span>
+                                </div>
+                                
+                                <div class="d-grid gap-1">
+                                    <a href="{% url 'restaurant:modifier_table' table.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </a>
+                                    {% if table.etat == 'libre' %}
+                                    <a href="{% url 'restaurant:supprimer_table' table.id %}" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </a>
+                                    {% else %}
+                                    <span class="btn btn-outline-secondary btn-sm disabled">
+                                        <i class="fas fa-lock"></i> {{ table.get_etat_display }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides et statistiques -->
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt"></i> Actions Rapides
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light border-success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
+                                <h6 class="fw-bold">Ajouter Table</h6>
+                                <p class="text-muted small mb-3">Créer une nouvelle table</p>
+                                <a href="{% url 'restaurant:ajouter_table' %}" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> Nouvelle Table
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light border-primary">
+                            <div class="card-body text-center">
+                                <i class="fas fa-eye fa-3x text-primary mb-3"></i>
+                                <h6 class="fw-bold">État Temps Réel</h6>
+                                <p class="text-muted small mb-3">Vue d'ensemble des tables</p>
+                                <a href="{% url 'restaurant:dashboard_serveur' %}" class="btn btn-primary">
+                                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-pie"></i> Statistiques Tables
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-12 mb-3">
+                        <div class="border-bottom pb-2">
+                            <h4 class="text-success mb-0">{{ tables|length }}</h4>
+                            <small class="text-muted">Total Tables</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-info mb-0">
+                            {% for table in tables %}
+                                {% if table.etat == 'libre' %}{{ forloop.counter0|add:1 }}{% endif %}
+                            {% empty %}0{% endfor %}
+                        </h5>
+                        <small class="text-muted">Libres</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-warning mb-0">
+                            {% for table in tables %}
+                                {% if table.etat == 'occupee' %}{{ forloop.counter0|add:1 }}{% endif %}
+                            {% empty %}0{% endfor %}
+                        </h5>
+                        <small class="text-muted">Occupées</small>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <small class="text-muted d-block mb-1">Répartition des états</small>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 60%"></div>
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 30%"></div>
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 10%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-success">Libres</small>
+                        <small class="text-warning">Occupées</small>
+                        <small class="text-danger">Réservées</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Guide d'utilisation -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Guide d'Utilisation
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-plus-circle fa-2x text-success mb-2"></i>
+                            <h6 class="small fw-bold">Ajouter</h6>
+                            <p class="small text-muted mb-0">Créez de nouvelles tables avec numéro et capacité</p>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-edit fa-2x text-warning mb-2"></i>
+                            <h6 class="small fw-bold">Modifier</h6>
+                            <p class="small text-muted mb-0">Changez la capacité ou le numéro des tables</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <i class="fas fa-trash fa-2x text-danger mb-2"></i>
+                            <h6 class="small fw-bold">Supprimer</h6>
+                            <p class="small text-muted mb-0">Retirez les tables (seulement si libres)</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <i class="fas fa-eye fa-2x text-primary mb-2"></i>
+                            <h6 class="small fw-bold">Surveiller</h6>
+                            <p class="small text-muted mb-0">État en temps réel des tables</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb"></i> États des Tables
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-4 text-center mb-3">
+                        <i class="fas fa-chair fa-2x text-success mb-2"></i>
+                        <h6 class="small fw-bold text-success">Libre</h6>
+                        <p class="small text-muted mb-0">Disponible pour attribution</p>
+                    </div>
+                    <div class="col-4 text-center mb-3">
+                        <i class="fas fa-chair fa-2x text-danger mb-2"></i>
+                        <h6 class="small fw-bold text-danger">Occupée</h6>
+                        <p class="small text-muted mb-0">Clients présents</p>
+                    </div>
+                    <div class="col-4 text-center mb-3">
+                        <i class="fas fa-chair fa-2x text-warning mb-2"></i>
+                        <h6 class="small fw-bold text-warning">Réservée</h6>
+                        <p class="small text-muted mb-0">Réservation confirmée</p>
+                    </div>
+                </div>
+                <div class="alert alert-light mb-0">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Les tables occupées ou réservées ne peuvent pas être supprimées
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Fonctions utilitaires pour la gestion des tables
+function rafraichirPage() {
+    location.reload();
+}
+
+function confirmerSuppression(tableId, numeroTable) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la table ${numeroTable} ?`)) {
+        window.location.href = `/admin/tables/supprimer/${tableId}/`;
+    }
+}
+
+// Fonction pour afficher les statistiques en temps réel
+function mettreAJourStatistiques() {
+    // Cette fonction pourrait être utilisée pour mettre à jour les statistiques via AJAX
+    // Mise à jour des statistiques...
+}
+
+
+
+// Animations et effets visuels modernes
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes au survol
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.transition = 'all 0.3s ease';
+            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        });
+    });
+
+    // Animation des boutons
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+            this.style.transition = 'transform 0.2s ease';
+        });
+
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+
+    // Animation de la barre de progression
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+            bar.style.transition = 'width 1s ease-in-out';
+        }, 500);
+    });
+
+    // Effet de pulsation pour les statistiques
+    const stats = document.querySelectorAll('h4, h5');
+    stats.forEach(stat => {
+        stat.addEventListener('mouseenter', function() {
+            this.style.animation = 'pulse 0.6s ease-in-out';
+        });
+
+        stat.addEventListener('animationend', function() {
+            this.style.animation = '';
+        });
+    });
+});
+
+// Ajout du CSS pour l'animation pulse
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+    }
+
+    .btn {
+        transition: all 0.2s ease;
+        border-radius: 8px;
+    }
+
+    .progress {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        transition: width 1s ease-in-out;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier le Plat - {{ plat.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-edit text-warning"></i> Modifier le Plat : {{ plat.nom }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'restaurant:gerer_plats_simple' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la gestion des plats
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-utensils"></i> Modifier les Informations
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nom" class="form-label">
+                                <i class="fas fa-tag text-primary"></i> Nom du Plat *
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="nom" 
+                                   name="nom" 
+                                   value="{{ plat.nom }}"
+                                   required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="categorie" class="form-label">
+                                <i class="fas fa-list text-info"></i> Catégorie *
+                            </label>
+                            <select class="form-select" id="categorie" name="categorie" required>
+                                <option value="entree" {% if plat.categorie == 'entree' %}selected{% endif %}>Entrée</option>
+                                <option value="plat" {% if plat.categorie == 'plat' %}selected{% endif %}>Plat Principal</option>
+                                <option value="dessert" {% if plat.categorie == 'dessert' %}selected{% endif %}>Dessert</option>
+                                <option value="boisson" {% if plat.categorie == 'boisson' %}selected{% endif %}>Boisson</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="prix" class="form-label">
+                                <i class="fas fa-money-bill text-success"></i> Prix (DH) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="prix" 
+                                       name="prix" 
+                                       step="0.01" 
+                                       min="0" 
+                                       value="{{ plat.prix }}"
+                                       required>
+                                <span class="input-group-text">DH</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-check-circle text-warning"></i> Disponibilité
+                            </label>
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="disponible" 
+                                       name="disponible" 
+                                       {% if plat.disponible %}checked{% endif %}>
+                                <label class="form-check-label" for="disponible">
+                                    Plat disponible à la commande
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left text-secondary"></i> Description
+                        </label>
+                        <textarea class="form-control" 
+                                  id="description" 
+                                  name="description" 
+                                  rows="3">{{ plat.description }}</textarea>
+                        <div class="form-text">Cette description sera visible par les clients dans le menu.</div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'restaurant:gerer_plats_simple' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Enregistrer les Modifications
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informations actuelles -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle text-info"></i> Informations Actuelles
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nom :</strong> {{ plat.nom }}</p>
+                        <p><strong>Catégorie :</strong> {{ plat.get_categorie_display }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Prix :</strong> {{ plat.prix|floatformat:2 }} DH</p>
+                        <p><strong>Statut :</strong> 
+                            {% if plat.disponible %}
+                                <span class="badge bg-success">Disponible</span>
+                            {% else %}
+                                <span class="badge bg-danger">Non disponible</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if plat.description %}
+                <p><strong>Description :</strong> {{ plat.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation du formulaire
+    const form = document.querySelector('form');
+    const nomInput = document.getElementById('nom');
+    const prixInput = document.getElementById('prix');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validation du nom
+        if (nomInput.value.trim().length < 3) {
+            alert('Le nom du plat doit contenir au moins 3 caractères');
+            nomInput.focus();
+            isValid = false;
+        }
+        
+        // Validation du prix
+        if (parseFloat(prixInput.value) <= 0) {
+            alert('Le prix doit être supérieur à 0');
+            prixInput.focus();
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    // Formatage automatique du prix
+    prixInput.addEventListener('blur', function() {
+        if (this.value) {
+            this.value = parseFloat(this.value).toFixed(2);
+        }
+    });
+});
+</script>
+{% endblock %}

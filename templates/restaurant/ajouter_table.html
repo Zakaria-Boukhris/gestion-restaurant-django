@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ajouter une Table{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-plus-circle text-success"></i> Ajouter une Nouvelle Table
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'restaurant:gerer_tables_simple' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la gestion des tables
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chair"></i> Informations de la Nouvelle Table
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="numero" class="form-label">
+                            <i class="fas fa-hashtag text-primary"></i> Numéro de Table *
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="numero" 
+                               name="numero" 
+                               min="1" 
+                               max="999"
+                               required
+                               placeholder="Ex: 1, 2, 3...">
+                        <div class="form-text">Le numéro doit être unique dans le restaurant.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="capacite" class="form-label">
+                            <i class="fas fa-users text-info"></i> Capacité (nombre de places) *
+                        </label>
+                        <select class="form-select" id="capacite" name="capacite" required>
+                            <option value="">Choisir la capacité</option>
+                            <option value="1">1 personne</option>
+                            <option value="2">2 personnes</option>
+                            <option value="4">4 personnes</option>
+                            <option value="6">6 personnes</option>
+                            <option value="8">8 personnes</option>
+                            <option value="10">10 personnes</option>
+                            <option value="12">12 personnes</option>
+                        </select>
+                        <div class="form-text">Nombre maximum de personnes pouvant s'asseoir à cette table.</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Information</h6>
+                        <p class="mb-0">La nouvelle table sera automatiquement créée avec le statut "Libre" et sera immédiatement disponible pour les réservations et attributions.</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'restaurant:gerer_tables_simple' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Ajouter la Table
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Conseils -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb text-warning"></i> Conseils pour ajouter une table
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Numérotation :</strong> Utilisez une numérotation logique et séquentielle</li>
+                    <li><strong>Capacité :</strong> Choisissez la capacité réelle de la table physique</li>
+                    <li><strong>Emplacement :</strong> Pensez à l'emplacement physique dans le restaurant</li>
+                    <li><strong>Flexibilité :</strong> Les tables peuvent être modifiées après création</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const numeroInput = document.getElementById('numero');
+    const capaciteSelect = document.getElementById('capacite');
+    
+    // Validation du formulaire
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validation du numéro
+        const numero = parseInt(numeroInput.value);
+        if (!numero || numero < 1 || numero > 999) {
+            alert('Le numéro de table doit être entre 1 et 999');
+            numeroInput.focus();
+            isValid = false;
+        }
+        
+        // Validation de la capacité
+        if (!capaciteSelect.value) {
+            alert('Veuillez sélectionner une capacité');
+            capaciteSelect.focus();
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    // Suggestion automatique de numéro
+    numeroInput.addEventListener('focus', function() {
+        if (!this.value) {
+            // Ici, on pourrait faire un appel AJAX pour obtenir le prochain numéro disponible
+            // Pour l'instant, on laisse l'utilisateur choisir
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier la Table {{ table.numero }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-edit text-warning"></i> Modifier la Table {{ table.numero }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'restaurant:gerer_tables_simple' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la gestion des tables
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-chair"></i> Modifier les Informations
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="numero" class="form-label">
+                            <i class="fas fa-hashtag text-primary"></i> Numéro de Table *
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="numero" 
+                               name="numero" 
+                               min="1" 
+                               max="999"
+                               value="{{ table.numero }}"
+                               required>
+                        <div class="form-text">Le numéro doit être unique dans le restaurant.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="capacite" class="form-label">
+                            <i class="fas fa-users text-info"></i> Capacité (nombre de places) *
+                        </label>
+                        <select class="form-select" id="capacite" name="capacite" required>
+                            <option value="1" {% if table.capacite == 1 %}selected{% endif %}>1 personne</option>
+                            <option value="2" {% if table.capacite == 2 %}selected{% endif %}>2 personnes</option>
+                            <option value="4" {% if table.capacite == 4 %}selected{% endif %}>4 personnes</option>
+                            <option value="6" {% if table.capacite == 6 %}selected{% endif %}>6 personnes</option>
+                            <option value="8" {% if table.capacite == 8 %}selected{% endif %}>8 personnes</option>
+                            <option value="10" {% if table.capacite == 10 %}selected{% endif %}>10 personnes</option>
+                            <option value="12" {% if table.capacite == 12 %}selected{% endif %}>12 personnes</option>
+                        </select>
+                        <div class="form-text">Nombre maximum de personnes pouvant s'asseoir à cette table.</div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Attention</h6>
+                        <p class="mb-0">
+                            <strong>État actuel :</strong> {{ table.get_etat_display }}
+                            {% if table.etat != 'libre' %}
+                            <br>Cette table est actuellement {{ table.get_etat_display|lower }}. Les modifications seront appliquées mais l'état restera inchangé.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'restaurant:gerer_tables_simple' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Enregistrer les Modifications
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informations actuelles -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle text-info"></i> Informations Actuelles
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <p><strong>Numéro :</strong> {{ table.numero }}</p>
+                        <p><strong>Capacité :</strong> {{ table.capacite }} personne{{ table.capacite|pluralize }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p><strong>État :</strong> 
+                            <span class="badge 
+                                {% if table.etat == 'libre' %}bg-success
+                                {% elif table.etat == 'occupee' %}bg-danger
+                                {% else %}bg-warning text-dark{% endif %}">
+                                {{ table.get_etat_display }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const numeroInput = document.getElementById('numero');
+    const capaciteSelect = document.getElementById('capacite');
+    
+    // Validation du formulaire
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validation du numéro
+        const numero = parseInt(numeroInput.value);
+        if (!numero || numero < 1 || numero > 999) {
+            alert('Le numéro de table doit être entre 1 et 999');
+            numeroInput.focus();
+            isValid = false;
+        }
+        
+        // Validation de la capacité
+        if (!capaciteSelect.value) {
+            alert('Veuillez sélectionner une capacité');
+            capaciteSelect.focus();
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

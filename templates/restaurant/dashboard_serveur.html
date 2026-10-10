@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Serveur{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-user-tie"></i> Dashboard Serveur</h1>
+    <p class="lead">{{ user.get_full_name|default:user.username }}</p>
+</div>
+
+<!-- 3 FONCTIONNALITÉS PRINCIPALES -->
+<div class="row">
+    
+    <!-- 1. CONFIRMER RÉSERVATIONS -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Confirmer Réservations</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Réservations en attente</h6>
+                
+                {% if reservations_en_attente %}
+                    {% for reservation in reservations_en_attente %}
+                    <div class="card mb-2 border-warning" id="reservation-{{ reservation.id }}">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ reservation.heure|date:"H:i" }}</strong><br>
+                                    <small>{{ reservation.client.nom }}</small><br>
+                                    <small class="text-muted">Table {{ reservation.table.numero }} - {{ reservation.nombre_personnes }} pers.</small>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-sm btn-success" onclick="confirmerReservation({{ reservation.id }})">
+                                        <i class="fas fa-check"></i> Confirmer
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="annulerReservationServeur({{ reservation.id }})">
+                                        <i class="fas fa-times"></i> Annuler
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="text-muted">Toutes les réservations sont confirmées</p>
+                    </div>
+                {% endif %}
+                
+                <hr>
+                <h6 class="text-muted mb-2">Réservations confirmées ({{ reservations_confirmees.count }})</h6>
+                {% for reservation in reservations_confirmees|slice:":3" %}
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small>{{ reservation.heure|date:"H:i" }} - {{ reservation.client.nom }}</small>
+                        <span class="badge bg-success">✓</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 2. PRENDRE COMMANDES -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-utensils"></i> Prendre Commandes</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Tables occupées</h6>
+
+                {% if tables_occupees %}
+                    {% for table in tables_occupees %}
+                    <div class="card mb-2 border-primary">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Table {{ table.numero }}</strong><br>
+                                    <small class="text-muted">{{ table.capacite }} places - Occupée</small>
+                                </div>
+                                <div>
+                                    <a href="{% url 'restaurant:prendre_commande' table.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus"></i> Commande
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                <h6 class="text-muted mb-3 mt-3">Tables réservées</h6>
+
+                {% if tables_reservees %}
+                    {% for table in tables_reservees %}
+                    <div class="card mb-2 border-warning">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Table {{ table.numero }}</strong><br>
+                                    <small class="text-muted">{{ table.capacite }} places - Réservée</small>
+                                </div>
+                                <div>
+                                    <a href="{% url 'restaurant:prendre_commande' table.id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-plus"></i> Commande
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% if not tables_occupees and not tables_reservees %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-chair fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Aucune table occupée ou réservée</p>
+                    </div>
+                {% endif %}
+                
+                <hr>
+                <h6 class="text-muted mb-2">Tables libres ({{ tables_libres.count }})</h6>
+                {% for table in tables_libres|slice:":5" %}
+                    <span class="badge bg-light text-dark me-1 mb-1">Table {{ table.numero }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 3. GÉNÉRER FACTURES -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-file-invoice"></i> Générer Factures</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Commandes terminées</h6>
+
+                <div id="commandesTerminees">
+                    {% if commandes_terminees %}
+                        {% for commande in commandes_terminees|slice:":5" %}
+                        <div class="card mb-2 border-success" id="commande-terminee-{{ commande.id }}">
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Commande #{{ commande.id }}</strong><br>
+                                        <small class="text-muted">Table {{ commande.table.numero }} - {{ commande.date|date:"H:i" }}</small>
+                                    </div>
+                                    <span class="badge bg-success">✓ Terminée</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3" id="aucune-commande-terminee">
+                            <i class="fas fa-file-invoice fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">Aucune commande terminée</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <hr>
+                <h6 class="text-muted mb-2">Commandes en cours ({{ commandes_en_cours.count }})</h6>
+                {% for commande in commandes_en_cours|slice:":5" %}
+                    <div class="card mb-2 border-info" id="commande-en-cours-{{ commande.id }}">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Table {{ commande.table.numero }}</strong><br>
+                                    <small class="text-muted">{{ commande.date|date:"H:i" }} - {{ commande.get_statut_display }}</small>
+                                </div>
+                                <div class="d-flex flex-column gap-1">
+                                    {% if commande.statut == 'en_preparation' %}
+                                        <button class="btn btn-sm btn-success" onclick="marquerServie({{ commande.id }})">
+                                            <i class="fas fa-check"></i> Servie
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="annulerCommandeServeur({{ commande.id }})">
+                                            <i class="fas fa-times"></i> Annuler
+                                        </button>
+                                    {% elif commande.statut == 'servie' %}
+                                        <button class="btn btn-sm btn-warning" onclick="terminerCommande({{ commande.id }})">
+                                            <i class="fas fa-flag-checkered"></i> Terminer
+                                        </button>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ commande.get_statut_display }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- STATISTIQUES RAPIDES -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Résumé du jour</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-warning">{{ reservations_en_attente.count }}</h4>
+                            <small class="text-muted">Réservations à confirmer</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ tables_occupees.count|add:tables_reservees.count }}</h4>
+                            <small class="text-muted">Tables occupées/réservées</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-success">{{ commandes_terminees.count }}</h4>
+                            <small class="text-muted">Commandes terminées</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-info">{{ commandes_en_cours.count }}</h4>
+                        <small class="text-muted">Commandes en cours</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Fonction pour confirmer une réservation
+function confirmerReservation(reservationId) {
+    if (confirm("Confirmer cette réservation ?")) {
+        fetch(`/reservations/confirmer-ajax/${reservationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const reservationElement = document.querySelector(`#reservation-${reservationId}`);
+                if (reservationElement) {
+                    reservationElement.style.transition = 'opacity 0.3s ease';
+                    reservationElement.style.opacity = '0';
+                    setTimeout(() => {
+                        reservationElement.remove();
+                        const reservationsRestantes = document.querySelectorAll('[id^="reservation-"]');
+                        if (reservationsRestantes.length === 0) {
+                            const container = document.querySelector('.card-body');
+                            if (container) {
+                                const messageHTML = `
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                        <p class="text-muted">Toutes les réservations sont confirmées</p>
+                                    </div>
+                                `;
+                                container.insertAdjacentHTML('beforeend', messageHTML);
+                            }
+                        }
+                    }, 300);
+                }
+                afficherNotification(data.message, 'success');
+            } else {
+                afficherNotification('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            afficherNotification('Erreur lors de la confirmation', 'error');
+        });
+    }
+}
+
+// Fonction pour marquer une commande comme servie
+function marquerServie(commandeId) {
+    if (confirm("Marquer cette commande comme servie ?")) {
+        fetch(`/commandes/marquer-servie/${commandeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                afficherNotification(data.message, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                afficherNotification('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            afficherNotification('Erreur lors de la mise à jour', 'error');
+        });
+    }
+}
+
+// Fonction pour terminer une commande
+function terminerCommande(commandeId) {
+    if (confirm("Terminer cette commande et générer la facture ?")) {
+        fetch(`/commandes/terminer/${commandeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                afficherNotification(data.message, 'success');
+                genererFacture(commandeId);
+            } else {
+                afficherNotification('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            afficherNotification('Erreur lors de la finalisation', 'error');
+        });
+    }
+}
+
+// Fonction pour générer une facture
+function genererFacture(commandeId) {
+    fetch(`/commandes/facture-ajax/${commandeId}/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            ajouterFactureInline(data.commande);
+            afficherNotification('Facture générée avec succès', 'success');
+        } else {
+            afficherNotification('Erreur lors de la génération de la facture', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        afficherNotification('Erreur lors de la génération de la facture', 'error');
+    });
+}
+
+// Fonction pour ajouter une facture inline
+function ajouterFactureInline(factureData) {
+    const commandesTerminees = document.getElementById('commandesTerminees');
+    const aucuneCommande = document.getElementById('aucune-commande-terminee');
+    if (aucuneCommande) {
+        aucuneCommande.remove();
+    }
+
+    let lignesHTML = '';
+    factureData.lignes.forEach(ligne => {
+        lignesHTML += `
+            <tr>
+                <td>${ligne.plat}</td>
+                <td class="text-center">${ligne.quantite}</td>
+                <td class="text-end">${ligne.prix_unitaire} DH</td>
+                <td class="text-end">${ligne.total} DH</td>
+            </tr>
+        `;
+    });
+
+    const factureHTML = `
+        <div class="card mb-3" id="facture-${factureData.id}">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-receipt"></i> Facture - Table ${factureData.table}
+                </h6>
+                <button class="btn btn-sm btn-outline-light" onclick="fermerFacture(${factureData.id})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Client:</strong> ${factureData.client}<br>
+                        <strong>Date:</strong> ${factureData.date}
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <strong>Facture #${factureData.id}</strong>
+                    </div>
+                </div>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Plat</th>
+                            <th class="text-center">Qté</th>
+                            <th class="text-end">Prix unit.</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${lignesHTML}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-success">
+                            <th colspan="3">Total</th>
+                            <th class="text-end">${factureData.total} DH</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+
+    commandesTerminees.insertAdjacentHTML('afterbegin', factureHTML);
+}
+
+// Fonction pour fermer une facture
+function fermerFacture(commandeId) {
+    const facture = document.getElementById(`facture-${commandeId}`);
+    if (facture) {
+        facture.remove();
+    }
+}
+
+// Fonction pour annuler une réservation (serveur)
+function annulerReservationServeur(reservationId) {
+    if (confirm("Annuler cette réservation ? Le client sera informé de l'annulation.")) {
+        fetch(`/reservations/annuler-ajax/${reservationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const reservationElement = document.querySelector(`#reservation-${reservationId}`);
+                if (reservationElement) {
+                    reservationElement.style.transition = 'opacity 0.3s ease';
+                    reservationElement.style.opacity = '0';
+                    setTimeout(() => {
+                        reservationElement.remove();
+                        const reservationsRestantes = document.querySelectorAll('[id^="reservation-"]');
+                        if (reservationsRestantes.length === 0) {
+                            const container = document.querySelector('.card-body');
+                            if (container) {
+                                const messageHTML = `
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                        <p class="text-muted">Toutes les réservations sont confirmées</p>
+                                    </div>
+                                `;
+                                container.insertAdjacentHTML('beforeend', messageHTML);
+                            }
+                        }
+                    }, 300);
+                }
+                afficherNotification(data.message, 'success');
+                mettreAJourStatistiques();
+            } else {
+                afficherNotification('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            afficherNotification("Erreur lors de l'annulation de la réservation", 'error');
+        });
+    }
+}
+
+// Fonction pour annuler une commande (serveur)
+function annulerCommandeServeur(commandeId) {
+    if (confirm("Annuler cette commande ? Cette action est irréversible.")) {
+        fetch(`/commandes/annuler-serveur/${commandeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const commandeElement = document.querySelector(`#commande-en-cours-${commandeId}`);
+                if (commandeElement) {
+                    commandeElement.style.transition = 'opacity 0.3s ease';
+                    commandeElement.style.opacity = '0';
+                    setTimeout(() => {
+                        commandeElement.remove();
+                        const commandesRestantes = document.querySelectorAll('[id^="commande-en-cours-"]');
+                        if (commandesRestantes.length === 0) {
+                            const container = document.querySelector('.card-body');
+                            if (container) {
+                                const messageHTML = `
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                        <p class="text-muted">Aucune commande en cours</p>
+                                    </div>
+                                `;
+                                container.insertAdjacentHTML('beforeend', messageHTML);
+                            }
+                        }
+                    }, 300);
+                }
+                afficherNotification(data.message, 'success');
+                mettreAJourStatistiques();
+            } else {
+                afficherNotification('Erreur: ' + (data.error || 'Erreur inconnue'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            afficherNotification("Erreur lors de l'annulation de la commande", 'error');
+        });
+    }
+}
+
+// Fonction pour afficher une notification
+function afficherNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        if (notification && notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Fonction pour mettre à jour les statistiques
+function mettreAJourStatistiques() {
+    const commandesEnCours = document.querySelectorAll('[id^="commande-en-cours-"]').length;
+    const commandesTerminees = document.querySelectorAll('[id^="commande-terminee-"], [id^="facture-"]').length;
+
+    const compteurEnCours = document.querySelector('.text-muted:contains("Commandes en cours")');
+    if (compteurEnCours) {
+        compteurEnCours.textContent = `Commandes en cours (${commandesEnCours})`;
+    }
+}
+</script>
+
+{% endblock %}

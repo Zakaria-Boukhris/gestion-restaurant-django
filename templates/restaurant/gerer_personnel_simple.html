@@ -1,0 +1,509 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion du Personnel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-users-cog text-warning"></i> 
+        Gestion du Personnel
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'restaurant:admin_custom' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour Admin
+            </a>
+            <a href="{% url 'restaurant:ajouter_personnel' %}" class="btn btn-success">
+                <i class="fas fa-user-plus"></i> Ajouter Personnel
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques du personnel -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h4>{{ personnel.count }}</h4>
+                <p class="small">Total Personnel</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-user-tie fa-2x mb-2"></i>
+                <h4>{{ personnel|length }}</h4>
+                <p class="small">Staff Actif</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                <h4>{{ personnel.count }}</h4>
+                <p class="small">Comptes Actifs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h4>En ligne</h4>
+                <p class="small">Statut</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste du personnel -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i> Liste du Personnel
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if personnel %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Nom d'utilisateur</th>
+                                    <th>Nom complet</th>
+                                    <th>Email</th>
+                                    <th>Rôle</th>
+                                    <th>Dernière connexion</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in personnel %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ user.username }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ user.get_full_name|default:"Non défini" }}
+                                    </td>
+                                    <td>
+                                        {{ user.email|default:"Non défini" }}
+                                    </td>
+                                    <td>
+                                        {% if user.role == 'admin' %}
+                                            <span class="badge bg-danger">Administrateur</span>
+                                        {% elif user.role == 'serveur' %}
+                                            <span class="badge bg-primary">Serveur</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ user.get_role_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_login %}
+                                            {{ user.last_login|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            <span class="text-muted">Jamais</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Actif</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactif</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'restaurant:modifier_personnel' user.id %}" class="btn btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if not user.is_superuser %}
+                                            <a href="{% url 'restaurant:supprimer_personnel' user.id %}" class="btn btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5>Aucun personnel trouvé</h5>
+                        <p class="text-muted">Commencez par ajouter des membres du personnel.</p>
+                        <a href="{% url 'restaurant:ajouter_personnel' %}" class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> Ajouter le Premier Membre
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt"></i> Actions Rapides
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-success w-100" onclick="ajouterPersonnel()">
+                            <i class="fas fa-user-plus"></i> Ajouter Personnel
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-primary w-100" onclick="gererRoles()">
+                            <i class="fas fa-user-tag"></i> Gérer Rôles
+                        </button>
+                    </div>
+
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-warning w-100" onclick="parametresSecurity()">
+                            <i class="fas fa-shield-alt"></i> Sécurité
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informations utiles -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <h6><i class="fas fa-info-circle"></i> Gestion du Personnel</h6>
+            <ul class="mb-0">
+                <li><strong>Ajouter :</strong> Créez de nouveaux comptes pour serveurs</li>
+                <li><strong>Modifier :</strong> Mettez à jour les informations et rôles</li>
+                <li><strong>Rôles :</strong> Administrateur, Serveur</li>
+                <li><strong>Sécurité :</strong> Gérez les permissions et accès</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter Personnel -->
+<div class="modal fade" id="modalAjouterPersonnel" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus"></i> Ajouter Personnel
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAjouterPersonnel">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom d'utilisateur</label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom</label>
+                            <input type="text" class="form-control" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom</label>
+                            <input type="text" class="form-control" name="last_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Rôle</label>
+                            <select class="form-select" name="role" required>
+                                <option value="">Choisir un rôle</option>
+                                <option value="admin">Administrateur</option>
+                                <option value="serveur">Serveur</option>
+
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" onclick="soumettreAjoutPersonnel()">
+                    <i class="fas fa-save"></i> Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Gérer Rôles -->
+<div class="modal fade" id="modalRoles" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-tag"></i> Gérer les Rôles
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="contenuModalRoles">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Sécurité -->
+<div class="modal fade" id="modalSecurite" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-shield-alt"></i> Paramètres de Sécurité
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Fonctionnalités de Sécurité</h6>
+                    <ul class="mb-0">
+                        <li>Réinitialisation des mots de passe</li>
+                        <li>Activation/Désactivation des comptes</li>
+                        <li>Gestion des permissions</li>
+                        <li>Audit des connexions</li>
+                    </ul>
+                </div>
+                <p class="text-muted">
+                    <i class="fas fa-construction"></i>
+                    Ces fonctionnalités avancées seront disponibles dans une prochaine version.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function ajouterPersonnel() {
+    console.log('Fonction ajouterPersonnel appelée');
+    try {
+        // Afficher le modal d'ajout de personnel
+        const modalElement = document.getElementById('modalAjouterPersonnel');
+        console.log('Modal element:', modalElement);
+
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            console.log('Modal affiché avec succès');
+        } else {
+            console.error('Modal element not found');
+            alert('Erreur: Modal non trouvé');
+        }
+    } catch (error) {
+        console.error('Erreur dans ajouterPersonnel:', error);
+        alert('Erreur: ' + error.message);
+    }
+}
+
+function modifierPersonnel(userId) {
+    alert(`Modifier le personnel ID: ${userId}`);
+    // Rediriger vers un formulaire de modification
+}
+
+function voirDetails(userId) {
+    alert(`Détails du personnel ID: ${userId}`);
+    // Afficher les détails du personnel
+}
+
+function supprimerPersonnel(userId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce membre du personnel ?')) {
+        alert(`Supprimer le personnel ID: ${userId}`);
+        // Envoyer une requête de suppression
+    }
+}
+
+function gererRoles() {
+    console.log('Fonction gererRoles appelée');
+    try {
+        // Charger et afficher le modal de gestion des rôles
+        const url = '{% url "restaurant:gerer_roles_personnel" %}';
+        console.log('Requête vers:', url);
+
+        fetch(url)
+            .then(response => {
+                console.log('Réponse reçue:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Données reçues:', data);
+                if (data.success) {
+                    afficherModalRoles(data.utilisateurs);
+                } else {
+                    alert('Erreur: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur de connexion:', error);
+                alert('Erreur de connexion: ' + error.message);
+            });
+    } catch (error) {
+        console.error('Erreur dans gererRoles:', error);
+        alert('Erreur: ' + error.message);
+    }
+}
+
+
+function parametresSecurity() {
+    console.log('Fonction parametresSecurity appelée');
+    try {
+        // Afficher le modal de sécurité
+        const modalElement = document.getElementById('modalSecurite');
+        console.log('Modal sécurité element:', modalElement);
+
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            console.log('Modal sécurité affiché avec succès');
+        } else {
+            console.error('Modal sécurité element not found');
+            alert('Erreur: Modal sécurité non trouvé');
+        }
+    } catch (error) {
+        console.error('Erreur dans parametresSecurity:', error);
+        alert('Erreur: ' + error.message);
+    }
+}
+
+// Fonction pour soumettre le formulaire d'ajout de personnel
+function soumettreAjoutPersonnel() {
+    const formData = new FormData(document.getElementById('formAjouterPersonnel'));
+
+    fetch('{% url "restaurant:ajouter_personnel_modal" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalAjouterPersonnel'));
+            modal.hide();
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Erreur de connexion');
+    });
+}
+
+// Fonction pour afficher le modal de gestion des rôles
+function afficherModalRoles(utilisateurs) {
+    let html = '<div class="table-responsive"><table class="table table-striped">';
+    html += '<thead><tr><th>Utilisateur</th><th>Rôle Actuel</th><th>Nouveau Rôle</th><th>Action</th></tr></thead><tbody>';
+
+    utilisateurs.forEach(user => {
+        html += `<tr>
+            <td>${user.first_name} ${user.last_name} (${user.username})</td>
+            <td><span class="badge bg-info">${user.role}</span></td>
+            <td>
+                <select class="form-select form-select-sm" id="role_${user.id}">
+                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                    <option value="serveur" ${user.role === 'serveur' ? 'selected' : ''}>Serveur</option>
+
+                </select>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="changerRole(${user.id})">
+                    <i class="fas fa-save"></i> Modifier
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    document.getElementById('contenuModalRoles').innerHTML = html;
+    const modal = new bootstrap.Modal(document.getElementById('modalRoles'));
+    modal.show();
+}
+
+// Fonction pour changer le rôle d'un utilisateur
+function changerRole(userId) {
+    const newRole = document.getElementById(`role_${userId}`).value;
+
+    const formData = new FormData();
+    formData.append('user_id', userId);
+    formData.append('new_role', newRole);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+    fetch('{% url "restaurant:gerer_roles_personnel" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Erreur de connexion');
+    });
+}
+
+// Animation des cartes au survol
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.2s';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

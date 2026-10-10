@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistiques Restaurant{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-chart-bar text-info"></i> 
+        Statistiques & Rapports
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'restaurant:admin_custom' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour Admin
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h4>{{ stats.clients_total }}</h4>
+                <p class="small">Clients Inscrits</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-utensils fa-2x mb-2"></i>
+                <h4>{{ stats.plats_total }}</h4>
+                <p class="small">Plats au Menu</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <i class="fas fa-chair fa-2x mb-2"></i>
+                <h4>{{ stats.tables_total }}</h4>
+                <p class="small">Tables Restaurant</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                <h4>{{ stats.commandes_jour }}</h4>
+                <p class="small">Commandes Aujourd'hui</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques détaillées -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line"></i> Activité Récente
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h3 class="text-success">{{ stats.reservations_jour }}</h3>
+                            <small class="text-muted">Réservations Aujourd'hui</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h3 class="text-primary">{{ stats.tables_occupees }}</h3>
+                            <small class="text-muted">Tables Occupées</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h3 class="text-warning">{{ stats.commandes_en_cours }}</h3>
+                            <small class="text-muted">Commandes en Cours</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h3 class="text-info">{{ stats.chiffre_affaires_jour|floatformat:2 }} DH</h3>
+                            <small class="text-muted">CA Aujourd'hui</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+</div>
+
+<!-- Informations utiles -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle"></i> Statistiques et Rapports</h6>
+            <ul class="mb-0">
+                <li><strong>Temps Réel :</strong> Les données sont mises à jour automatiquement</li>
+                <li><strong>Historique :</strong> Consultez l'évolution de votre activité</li>
+                <li><strong>Analyses :</strong> Suivez les tendances et performances</li>
+                <li><strong>Optimisation :</strong> Utilisez ces données pour améliorer votre service</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh des statistiques toutes les 30 secondes
+setInterval(function() {
+    // Recharger seulement les statistiques
+    location.reload();
+}, 30000);
+
+// Animation des cartes au survol
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.2s';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

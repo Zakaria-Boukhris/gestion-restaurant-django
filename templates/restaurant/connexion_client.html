@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Connexion Client{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-sign-in-alt"></i> Connexion Client</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Connectez-vous avec votre numéro de téléphone pour accéder à votre compte.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="telephone" class="form-label">Numéro de téléphone</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="telephone" 
+                               name="telephone" 
+                               placeholder="Ex: 0661234567"
+                               required>
+                        <div class="form-text">Entrez le numéro de téléphone utilisé lors de votre inscription.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-sign-in-alt"></i> Se connecter
+                        </button>
+                    </div>
+                </form>
+                
+                <hr>
+                <div class="text-center">
+                    <p class="mb-0">Pas encore de compte ?</p>
+                    <a href="{% url 'restaurant:inscription_client' %}" class="btn btn-outline-success">
+                        <i class="fas fa-user-plus"></i> S'inscrire
+                    </a>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Pourquoi se connecter ?</h6>
+                        <ul class="mb-0">
+                            <li>Réserver une table facilement</li>
+                            <li>Gérer vos réservations</li>
+                            <li>Historique de vos visites</li>
+                            <li>Recevoir des notifications</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %}Réserver une table{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-calendar-plus"></i> Réserver une table</h4>
+            </div>
+            <div class="card-body">
+                {% if client %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-user"></i> Réservation pour : <strong>{{ client.nom }}</strong>
+                    </div>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.table.id_for_label }}" class="form-label">{{ form.table.label }}</label>
+                                {{ form.table }}
+                                {% if form.table.errors %}
+                                    <div class="text-danger small">{{ form.table.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.nombre_personnes.id_for_label }}" class="form-label">{{ form.nombre_personnes.label }}</label>
+                                {{ form.nombre_personnes }}
+                                {% if form.nombre_personnes.errors %}
+                                    <div class="text-danger small">{{ form.nombre_personnes.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Les tables disponibles seront filtrées selon le nombre de personnes
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.date.id_for_label }}" class="form-label">{{ form.date.label }}</label>
+                                {{ form.date }}
+                                {% if form.date.errors %}
+                                    <div class="text-danger small">{{ form.date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.heure.id_for_label }}" class="form-label">{{ form.heure.label }}</label>
+                                {{ form.heure }}
+                                <div class="form-text">Heures d'ouverture : 12h00 - 14h30 et 19h00 - 23h00</div>
+                                {% if form.heure.errors %}
+                                    <div class="text-danger small">{{ form.heure.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.commentaire.id_for_label }}" class="form-label">{{ form.commentaire.label }}</label>
+                        {{ form.commentaire }}
+                        {% if form.commentaire.errors %}
+                            <div class="text-danger small">{{ form.commentaire.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-calendar-check"></i> Confirmer la réservation
+                        </button>
+                        <a href="{% url 'restaurant:profil_client' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour au profil
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Informations sur les tables disponibles -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chair"></i> Tables disponibles</h5>
+            </div>
+            <div class="card-body">
+                {% if tables_libres %}
+                    {% for table in tables_libres %}
+                    <div class="card mb-2">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Table {{ table.numero }}</strong><br>
+                                    <small class="text-muted">{{ table.capacite }} places</small>
+                                </div>
+                                <span class="badge bg-success">Libre</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                        <p class="text-muted">Aucune table disponible pour le moment.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Informations pratiques -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informations pratiques</h5>
+            </div>
+            <div class="card-body">
+                <h6><i class="fas fa-clock"></i> Horaires d'ouverture</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Déjeuner :</strong> 12h00 - 14h30</li>
+                    <li><strong>Dîner :</strong> 19h00 - 23h00</li>
+                </ul>
+                
+                <h6 class="mt-3"><i class="fas fa-utensils"></i> Notre cuisine</h6>
+                <p class="small text-muted">
+                    Cuisine marocaine traditionnelle avec des plats authentiques 
+                    préparés avec des ingrédients frais et des épices sélectionnées.
+                </p>
+                
+                <h6 class="mt-3"><i class="fas fa-phone"></i> Contact</h6>
+                <p class="small text-muted">
+                    Pour toute question ou demande spéciale, 
+                    n'hésitez pas à nous contacter.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Validation côté client
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.querySelector('input[type="date"]');
+    const timeInput = document.querySelector('input[type="time"]');
+    
+    // Définir la date minimum à aujourd'hui
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
+    }
+    
+    // Validation des heures d'ouverture
+    if (timeInput) {
+        timeInput.addEventListener('change', function() {
+            const time = this.value;
+            const [hours, minutes] = time.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes;
+            
+            // Heures de déjeuner : 12h00 - 14h30 (720 - 870 minutes)
+            // Heures de dîner : 19h00 - 23h00 (1140 - 1380 minutes)
+            const lunchStart = 12 * 60; // 720
+            const lunchEnd = 14 * 60 + 30; // 870
+            const dinnerStart = 19 * 60; // 1140
+            const dinnerEnd = 23 * 60; // 1380
+            
+            if (!((totalMinutes >= lunchStart && totalMinutes <= lunchEnd) || 
+                  (totalMinutes >= dinnerStart && totalMinutes <= dinnerEnd))) {
+                alert('Veuillez choisir une heure pendant nos heures d\'ouverture :\n' +
+                      'Déjeuner : 12h00 - 14h30\n' +
+                      'Dîner : 19h00 - 23h00');
+                this.value = '';
+            }
+        });
+    }
+
+    // Filtrage des tables selon le nombre de personnes
+    const nombrePersonnesField = document.getElementById('{{ form.nombre_personnes.id_for_label }}');
+    const tableField = document.getElementById('{{ form.table.id_for_label }}');
+
+    // Données des tables avec leurs capacités
+    const tablesData = [
+        {% for table in tables_libres %}
+        {
+            id: {{ table.id }},
+            numero: {{ table.numero }},
+            capacite: {{ table.capacite }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    function filtrerTables() {
+        const nombrePersonnes = parseInt(nombrePersonnesField.value);
+
+        // Vider le select des tables
+        tableField.innerHTML = '<option value="">---------</option>';
+
+        if (nombrePersonnes) {
+            // Filtrer les tables qui ont exactement la capacité demandée
+            const tablesCompatibles = tablesData.filter(table => table.capacite === nombrePersonnes);
+
+            if (tablesCompatibles.length > 0) {
+                tablesCompatibles.forEach(table => {
+                    const option = document.createElement('option');
+                    option.value = table.id;
+                    option.textContent = `Table ${table.numero} (${table.capacite} places)`;
+                    tableField.appendChild(option);
+                });
+
+                // Mettre à jour l'affichage des tables disponibles
+                mettreAJourAffichageTables(tablesCompatibles);
+            } else {
+                // Aucune table compatible
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = `Aucune table disponible pour ${nombrePersonnes} personne(s)`;
+                option.disabled = true;
+                tableField.appendChild(option);
+
+                // Afficher message dans la sidebar
+                mettreAJourAffichageTables([]);
+            }
+        } else {
+            // Remettre toutes les tables
+            tablesData.forEach(table => {
+                const option = document.createElement('option');
+                option.value = table.id;
+                option.textContent = `Table ${table.numero} (${table.capacite} places)`;
+                tableField.appendChild(option);
+            });
+
+            mettreAJourAffichageTables(tablesData);
+        }
+    }
+
+    function mettreAJourAffichageTables(tables) {
+        const container = document.querySelector('.card-body');
+        const tablesContainer = container.querySelector('.tables-list') || container;
+
+        // Supprimer l'ancien contenu
+        const existingTables = tablesContainer.querySelectorAll('.card.mb-2, .text-center');
+        existingTables.forEach(el => el.remove());
+
+        if (tables.length > 0) {
+            tables.forEach(table => {
+                const tableCard = document.createElement('div');
+                tableCard.className = 'card mb-2';
+                tableCard.innerHTML = `
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Table ${table.numero}</strong><br>
+                                <small class="text-muted">${table.capacite} places</small>
+                            </div>
+                            <span class="badge bg-success">Compatible</span>
+                        </div>
+                    </div>
+                `;
+                tablesContainer.appendChild(tableCard);
+            });
+        } else {
+            const noTablesMsg = document.createElement('div');
+            noTablesMsg.className = 'text-center';
+            noTablesMsg.innerHTML = `
+                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                <p class="text-muted">Aucune table disponible pour ce nombre de personnes.</p>
+            `;
+            tablesContainer.appendChild(noTablesMsg);
+        }
+    }
+
+    // Écouter les changements du nombre de personnes
+    if (nombrePersonnesField) {
+        nombrePersonnesField.addEventListener('change', filtrerTables);
+        nombrePersonnesField.addEventListener('input', filtrerTables);
+    }
+});
+</script>
+{% endblock %}

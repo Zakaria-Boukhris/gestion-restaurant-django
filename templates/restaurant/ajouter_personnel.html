@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ajouter un Membre du Personnel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-user-plus text-success"></i> Ajouter un Nouveau Membre du Personnel
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'restaurant:gerer_personnel_simple' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la gestion du personnel
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-tie"></i> Informations du Nouveau Membre
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Informations de connexion -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user text-primary"></i> Nom d'utilisateur *
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   name="username" 
+                                   required
+                                   placeholder="Ex: mohamed.serveur">
+                            <div class="form-text">Utilisé pour se connecter au système.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock text-danger"></i> Mot de passe *
+                            </label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="password" 
+                                   name="password" 
+                                   required
+                                   minlength="6">
+                            <div class="form-text">Minimum 6 caractères.</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations personnelles -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">
+                                <i class="fas fa-id-card text-info"></i> Prénom
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="first_name" 
+                                   name="first_name"
+                                   placeholder="Ex: Mohamed">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">
+                                <i class="fas fa-id-card text-info"></i> Nom de famille
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="last_name" 
+                                   name="last_name"
+                                   placeholder="Ex: Alami">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope text-secondary"></i> Email
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email"
+                                   placeholder="Ex: mohamed@restaurant.ma">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="role" class="form-label">
+                                <i class="fas fa-user-tag text-warning"></i> Rôle *
+                            </label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="">Choisir un rôle</option>
+                                <option value="serveur">Serveur</option>
+
+                                <option value="admin">Administrateur</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations sur les rôles -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Rôles et Permissions</h6>
+                        <ul class="mb-0">
+                            <li><strong>Serveur :</strong> Gestion des tables, commandes, réservations et factures</li>
+
+                            <li><strong>Administrateur :</strong> Accès complet à toutes les fonctionnalités</li>
+                        </ul>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'restaurant:gerer_personnel_simple' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Créer le Compte
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Conseils -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb text-warning"></i> Conseils pour créer un compte
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Nom d'utilisateur :</strong> Choisissez un nom unique et facile à retenir</li>
+                    <li><strong>Mot de passe :</strong> Utilisez un mot de passe sécurisé</li>
+                    <li><strong>Rôle :</strong> Sélectionnez le rôle approprié selon les responsabilités</li>
+                    <li><strong>Informations :</strong> Les informations personnelles peuvent être modifiées plus tard</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const roleSelect = document.getElementById('role');
+    
+    // Validation du formulaire
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validation du nom d'utilisateur
+        if (usernameInput.value.trim().length < 3) {
+            alert('Le nom d\'utilisateur doit contenir au moins 3 caractères');
+            usernameInput.focus();
+            isValid = false;
+        }
+        
+        // Validation du mot de passe
+        if (passwordInput.value.length < 6) {
+            alert('Le mot de passe doit contenir au moins 6 caractères');
+            passwordInput.focus();
+            isValid = false;
+        }
+        
+        // Validation du rôle
+        if (!roleSelect.value) {
+            alert('Veuillez sélectionner un rôle');
+            roleSelect.focus();
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    // Suggestion de nom d'utilisateur basé sur le prénom/nom
+    const firstNameInput = document.getElementById('first_name');
+    const lastNameInput = document.getElementById('last_name');
+    
+    function suggestUsername() {
+        const firstName = firstNameInput.value.trim().toLowerCase();
+        const lastName = lastNameInput.value.trim().toLowerCase();
+        const role = roleSelect.value;
+        
+        if (firstName && role && !usernameInput.value) {
+            let suggestion = firstName;
+            if (lastName) {
+                suggestion += '.' + lastName.charAt(0);
+            }
+            if (role !== 'admin') {
+                suggestion += '.' + role;
+            }
+            usernameInput.value = suggestion;
+        }
+    }
+    
+    firstNameInput.addEventListener('blur', suggestUsername);
+    lastNameInput.addEventListener('blur', suggestUsername);
+    roleSelect.addEventListener('change', suggestUsername);
+});
+</script>
+{% endblock %}

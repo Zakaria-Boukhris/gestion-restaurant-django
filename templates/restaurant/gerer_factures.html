@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Factures{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-file-invoice text-success"></i> 
+        Gestion des Factures
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'restaurant:admin_custom' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour Admin
+            </a>
+            <a href="{% url 'restaurant:dashboard_serveur' %}" class="btn btn-outline-primary">
+                <i class="fas fa-tachometer-alt"></i> Dashboard Serveur
+            </a>
+            <button class="btn btn-outline-success" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i> Actualiser
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ commandes_a_facturer|length }}</h4>
+                        <p class="mb-0">À Facturer</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ factures_jour|length }}</h4>
+                        <p class="mb-0">Factures Aujourd'hui</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-invoice fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_jour|floatformat:2 }} DH</h4>
+                        <p class="mb-0">Chiffre d'Affaires</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-coins fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Commandes à facturer -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-clock"></i> Commandes à Facturer</h5>
+            </div>
+            <div class="card-body">
+                {% if commandes_a_facturer %}
+                    {% for commande in commandes_a_facturer %}
+                    <div class="card mb-3 border-warning">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title mb-1">
+                                        <i class="fas fa-table"></i> Table {{ commande.table.numero }}
+                                    </h6>
+                                    <p class="card-text mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i> {{ commande.date|date:"d/m/Y H:i" }}<br>
+                                            <i class="fas fa-user"></i> {{ commande.utilisateur.get_full_name|default:commande.utilisateur.username }}
+                                        </small>
+                                    </p>
+                                    
+                                    <!-- Détails de la commande -->
+                                    <div class="mb-2">
+                                        {% for ligne in commande.lignecommande_set.all %}
+                                        <small class="d-block">
+                                            {{ ligne.quantite }}x {{ ligne.plat.nom }} - {{ ligne.sous_total|floatformat:2 }} DH
+                                        </small>
+                                        {% endfor %}
+                                    </div>
+
+                                    <strong class="text-success">
+                                        Total: {{ commande.total|floatformat:2 }} DH
+                                    </strong>
+                                </div>
+                                <div class="text-end">
+                                    <button class="btn btn-success btn-sm mb-1" onclick="terminerCommande({{ commande.id }})">
+                                        <i class="fas fa-check"></i> Terminer
+                                    </button>
+                                    <a href="{% url 'restaurant:generer_facture' commande.id %}" class="btn btn-outline-info btn-sm" target="_blank">
+                                        <i class="fas fa-print"></i> Aperçu
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucune commande à facturer</h5>
+                        <p class="text-muted">Toutes les commandes sont à jour !</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Historique des factures du jour -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Factures du Jour</h5>
+            </div>
+            <div class="card-body">
+                {% if factures_jour %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Table</th>
+                                    <th>Heure</th>
+                                    <th>Serveur</th>
+                                    <th>Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for facture in factures_jour %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ facture.table.numero }}</strong>
+                                    </td>
+                                    <td>
+                                        <small>{{ facture.date|time:"H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{ facture.utilisateur.get_full_name|default:facture.utilisateur.username|truncatechars:15 }}</small>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">
+                                            {{ facture.total|floatformat:2 }} DH
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'restaurant:generer_facture' facture.id %}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucune facture aujourd'hui</h5>
+                        <p class="text-muted">Les factures apparaîtront ici une fois générées.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonction pour terminer une commande et générer la facture
+function terminerCommande(commandeId) {
+    if (confirm('Terminer cette commande et générer la facture ?')) {
+        fetch(`/commandes/terminer/${commandeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualiser la page pour voir les changements
+                location.reload();
+            } else {
+                alert('Erreur lors de la finalisation: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        });
+    }
+}
+
+// Auto-actualisation toutes les 60 secondes
+setInterval(function() {
+    location.reload();
+}, 60000);
+</script>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}

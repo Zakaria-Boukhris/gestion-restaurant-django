@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier {{ user_obj.username }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-user-edit text-warning"></i> Modifier : {{ user_obj.username }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'restaurant:gerer_personnel_simple' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la gestion du personnel
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-tie"></i> Modifier les Informations
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Informations personnelles -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">
+                                <i class="fas fa-id-card text-info"></i> Prénom
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="first_name" 
+                                   name="first_name"
+                                   value="{{ user_obj.first_name }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">
+                                <i class="fas fa-id-card text-info"></i> Nom de famille
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="last_name" 
+                                   name="last_name"
+                                   value="{{ user_obj.last_name }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope text-secondary"></i> Email
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email"
+                                   value="{{ user_obj.email }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="role" class="form-label">
+                                <i class="fas fa-user-tag text-warning"></i> Rôle *
+                            </label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="serveur" {% if user_obj.role == 'serveur' %}selected{% endif %}>Serveur</option>
+
+                                <option value="admin" {% if user_obj.role == 'admin' %}selected{% endif %}>Administrateur</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Statut du compte -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-toggle-on text-success"></i> Statut du Compte
+                        </label>
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="is_active" 
+                                   name="is_active" 
+                                   {% if user_obj.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Compte actif (l'utilisateur peut se connecter)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Changement de mot de passe -->
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">
+                            <i class="fas fa-key text-danger"></i> Nouveau Mot de Passe
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="new_password" 
+                               name="new_password"
+                               minlength="6"
+                               placeholder="Laisser vide pour ne pas changer">
+                        <div class="form-text">Minimum 6 caractères. Laisser vide pour conserver le mot de passe actuel.</div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'restaurant:gerer_personnel_simple' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Enregistrer les Modifications
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informations actuelles -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle text-info"></i> Informations Actuelles
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nom d'utilisateur :</strong> {{ user_obj.username }}</p>
+                        <p><strong>Nom complet :</strong> {{ user_obj.get_full_name|default:"Non défini" }}</p>
+                        <p><strong>Email :</strong> {{ user_obj.email|default:"Non défini" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Rôle :</strong> {{ user_obj.get_role_display }}</p>
+                        <p><strong>Statut :</strong> 
+                            {% if user_obj.is_active %}
+                                <span class="badge bg-success">Actif</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactif</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Dernière connexion :</strong> 
+                            {% if user_obj.last_login %}
+                                {{ user_obj.last_login|date:"d/m/Y H:i" }}
+                            {% else %}
+                                Jamais connecté
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const roleSelect = document.getElementById('role');
+    const newPasswordInput = document.getElementById('new_password');
+    
+    // Validation du formulaire
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validation du rôle
+        if (!roleSelect.value) {
+            alert('Veuillez sélectionner un rôle');
+            roleSelect.focus();
+            isValid = false;
+        }
+        
+        // Validation du nouveau mot de passe s'il est fourni
+        if (newPasswordInput.value && newPasswordInput.value.length < 6) {
+            alert('Le nouveau mot de passe doit contenir au moins 6 caractères');
+            newPasswordInput.focus();
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}
